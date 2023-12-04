@@ -1,7 +1,7 @@
 class TasksController < ApiController
   skip_before_action :authenticate_request, only: %i[create index]
   before_action :authenticate_request
-  before_action :check_user, only: [:update]
+  # before_action :check_user, only: [:update]
 
   def index
     tasks = Task.all
@@ -29,6 +29,8 @@ class TasksController < ApiController
       if @task.nil?
         render json: { message: 'Task not exits for params id' }
       elsif @task.update(task_params)
+        @user = User.find_by_id(@task.user_id)
+        MyMailer.with(task: @task, user: @user).task_updated.deliver_now
         render json: @task, status: :ok
       else
         render json: { message: 'task not updated' }
@@ -51,6 +53,15 @@ class TasksController < ApiController
     else
       render json: { message: 'Please enter valid task id' }, status: :ok
     end
+  end
+
+
+  def assign_task
+    @task = Task.find_by_id(params[:task_id])
+    @user = User.find_by_id(params[:user_id])
+    @user_task = @user.tasks << @task
+    MyMailer.with(task: @task, user: @user).welcome_email.deliver_now
+    render json: {user_task: @user_task, message: 'Task assigned to user successfuly'}, status: :ok
   end
 
   private

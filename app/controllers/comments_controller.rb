@@ -3,6 +3,9 @@ class CommentsController < ApiController
   before_action :authenticate_request
   def create
     if @comment = @current_user.comments.create(comment_params)
+      @task = Task.find_by_id(params[:task_id])
+      @user = User.find_by_id(@task.user_id)
+      MyMailer.with(task: @task, user: @user, comment: @comment).comments_on_task.deliver_now
       render json: { user: @comment }, status: :created
     else
       render json: { error: @comment.errors.full_messages }, status: :unprocessable_entity
