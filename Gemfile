@@ -53,7 +53,19 @@ gem 'omniauth-rails_csrf_protection', '~> 1.0'
 gem 'dotenv-rails'
 gem 'omniauth'
 gem 'kaminari'
-gem 'rubocop'
-gem 'rubocop-rails'
+gem 'sidekiq_alive'
+gem 'redis', '4.8.0'
+gem 'sidekiq', '~> 6.1.0'
+gem 'sidekiq-cron'
+gem 'devise'
+gem 'activeadmin'
+gem 'sprockets', '<4'
+gem 'sass-rails'
+gem 'cancancan'
+gem 'activestorage'
+gem 'active_model_serializers'
+
+
+
 
 

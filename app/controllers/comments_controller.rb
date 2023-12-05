@@ -1,6 +1,7 @@
 class CommentsController < ApiController
   skip_before_action :authenticate_request, only: %i[create index]
   before_action :authenticate_request
+  load_and_authorize_resource
   def create
     if @comment = @current_user.comments.create(comment_params)
       @task = Task.find_by_id(params[:task_id])

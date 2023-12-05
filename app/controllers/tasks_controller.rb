@@ -1,6 +1,7 @@
 class TasksController < ApiController
-  skip_before_action :authenticate_request, only: %i[create index]
-  before_action :authenticate_request
+  # skip_before_action :authenticate_request, only: %i[ index]
+  # before_action :authenticate_request
+  load_and_authorize_resource
   # before_action :check_user, only: [:update]
 
   def index
@@ -9,7 +10,7 @@ class TasksController < ApiController
   end
 
   def create
-    # @task = Task.new(task_params)
+    @task = Task.new(task_params)
     if @current_user.user_type == 'Admin'
       @task = @current_user.tasks.create(task_params)
       if @task.save
@@ -66,13 +67,7 @@ class TasksController < ApiController
 
   private
 
-  def check_user
-    return if @current_user.user_type == 'Admin' || @current_user.user_type == 'Manger'
-
-    render json: { error: 'Not Allowed' }
-  end
-
   def task_params
-    params.permit(:title, :description, :due_date, :priorities, :status)
+    params.permit(:title, :description, :due_date, :priorities, :status, :image)
   end
 end

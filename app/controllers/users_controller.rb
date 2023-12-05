@@ -1,11 +1,11 @@
 class UsersController < ApiController
   include JsonWebToken
   skip_before_action :authenticate_request, only: %i[create index google_oauth2_callback]
-  # skip_before_action :check_customer
   def index
     @users = User.all
     @users = Kaminari.paginate_array(@users).page(params[:page]).per(5)
-    render json: { users: @users, meta: { current_page: @users.current_page, total_page: @users.total_pages } }
+    render :json => @users,meta: { current_page: @users.current_page, total_page: @users.total_pages }, each_serializer: UserSerializer
+   #render json: { users: @users, meta: { current_page: @users.current_page, total_page: @users.total_pages } }
   end
 
   def create
