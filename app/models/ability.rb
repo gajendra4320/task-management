@@ -4,20 +4,19 @@ class Ability
   include CanCan::Ability
 
   def initialize(user)
-
     # frozen_string_literal: true
-    if user.user_type == "Manager"
+    if user.user_type == 'Manager'
       puts "------------------------------------>#{user.user_type}"
-      can [:update, :assign_task], Task
-      # can [:create, :index, :update, :destroy], Service, user_id:user.id
-    elsif user.user_type == "Admin"
+      can %i[update assign_task index destroy show create], Task
+      can %i[update index destroy show create], Comment
+    elsif user.user_type == 'Admin'
       puts "------------------------------------>#{user.user_type}"
-        can :manage, :all
-    elsif user.user_type == "User"
+      can :manage, :all
+    elsif user.user_type == 'User'
       puts "------------------------------------>#{user.user_type}"
-        can :read, :all
-      # can [:create, :index, :update, :destroy], Comments , user_id: user.id
-      # can :manage, Service
+      can %i[update index destroy show create], Comment
+      can :read, Task
+      can :user, User
     end
     # Define abilities for the user here. For example:
     #

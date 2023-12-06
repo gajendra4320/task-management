@@ -1,11 +1,11 @@
 class UsersController < ApiController
-  include JsonWebToken
   skip_before_action :authenticate_request, only: %i[create index google_oauth2_callback]
   def index
     @users = User.all
     @users = Kaminari.paginate_array(@users).page(params[:page]).per(5)
-    render :json => @users,meta: { current_page: @users.current_page, total_page: @users.total_pages }, each_serializer: UserSerializer
-   #render json: { users: @users, meta: { current_page: @users.current_page, total_page: @users.total_pages } }
+    render json: @users, meta: { current_page: @users.current_page, total_page: @users.total_pages },
+           each_serializer: UserSerializer
+    # render json: { users: @users, meta: { current_page: @users.current_page, total_page: @users.total_pages } }
   end
 
   def create
@@ -19,10 +19,8 @@ class UsersController < ApiController
   end
 
   def google_oauth2_callback
-    byebug
     # user_info = request.env['omniauth.auth']
     # @user_info = User.from_omniauth(request.env["omniauth.auth"])
-
     user = User.find_by(email: user_info['info']['email'])
     if user
       token = UsersController.new.jwt_encode(user_id: user.id)
@@ -59,6 +57,15 @@ class UsersController < ApiController
 
   def show
     render json: @current_user, status: :ok if @current_user.present?
+  end
+
+  def destroy
+    if @current_user.present?
+      @current_user.delete
+      render json: { user: @current_user, message: 'current_user deleted' }, status: :ok
+    else
+      render json: { message: 'User not present' }, status: :ok
+    end
   end
 
   private

@@ -1,6 +1,6 @@
 class CommentsController < ApiController
-  skip_before_action :authenticate_request, only: %i[create index]
-  before_action :authenticate_request
+  # skip_before_action :authenticate_request, only: %i[create index]
+  # before_action :authenticate_request
   load_and_authorize_resource
   def create
     if @comment = @current_user.comments.create(comment_params)
@@ -40,11 +40,11 @@ class CommentsController < ApiController
   end
 
   def destroy
-    @comment = Comment.find_by_id(params[:id])
+    @comment = @current_user.comments.find_by(id: params[:id])
     if @comment.delete
       render json: { comment: @comment, message: 'comment deleted' }, status: :ok
     else
-      render json: { message: 'Please enter valid task id' }, status: :ok
+      render json: { message: 'you are not create comment' }, status: :ok
     end
   end
 

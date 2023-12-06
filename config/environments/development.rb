@@ -57,6 +57,7 @@ Rails.application.configure do
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true
+  config.action_mailer.perform_deliveries = true
 
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true
@@ -69,7 +70,7 @@ Rails.application.configure do
   port:            587,
   domain:          'example.com',
   user_name:       'gajendrap@shriffle.com',
-  password:        'ohxydyvpvkfhnmci',
+  password:        'pkufliwhefcppkaw',
   authentication:  'plain',
   enable_starttls: true,
   open_timeout:    5,

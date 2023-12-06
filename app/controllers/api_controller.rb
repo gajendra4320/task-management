@@ -11,6 +11,12 @@ class ApiController < ActionController::API
   rescue_from CanCan::AccessDenied do |exception|
     render json: {warning: exception, status: 'authorization_failed'}
   end
+  rescue_from ActiveRecord::RecordNotFound do |exception|
+    render json: {warning: exception, status: '404'}
+  end
+  rescue_from NoMethodError do |exception|
+    render json: {warning: exception, status: '500'}
+  end
 
   private
 
