@@ -1,59 +1,53 @@
+# frozen_string_literal: true
+
+# task controller
 class TasksController < ApiController
   load_and_authorize_resource
 
   def index
-    tasks = Task.all
-    render json: tasks, status: :ok
+    @tasks = Task.all
+    @tasks = Kaminari.paginate_array(@tasks).page(params[:page]).per(5)
+    render json: @tasks, meta: { current_page: @tasks.current_page, total_page: @tasks.total_pages },
+           each_serializer: TaskSerializer
   end
 
   def create
-    @task = @current_user.tasks.create(task_params)
-    if @task.present?
-      render json: { user: @task }, status: :created
+    task = @current_user.tasks.create(task_params)
+    if task.present?
+      render json: TaskSerializer.new(task).serializable_hash, status: :created
     else
       render json: { message: 'task not created' }, status: :unprocessable_entity
     end
   end
 
   def update
-    if params[:id].present?
-      @task = Task.find_by_id(params[:id])
-      if @task.nil?
-        render json: { message: 'Task not exits for params id' }
-      elsif @current_user.user_type == 'Manager'
-        @task.update(update_params)
-        @user = User.find_by(id: @task.user_id)
-        MyMailer.with(task: @task, user: @user).task_updated.deliver_now
-        render json: @task, status: :ok
-      elsif @current_user.user_type == 'Admin'
-        @task.update(task_params)
-        @user = User.find_by(id: @task.user_id)
-        MyMailer.with(task: @task, user: @user).task_updated.deliver_now
-        render json: @task, status: :ok
-      else
-        render json: { message: 'task not updated' }
-      end
-    else
-      render json: { message: 'id not present in params' }, status: :ok
+    find_task(params[:id])
+    if @current_user.user_type == 'Manager'
+      @task.update(update_params)
+      find_user_tasks(@task)
+    elsif @current_user.user_type == 'Admin'
+      @task.update(task_params)
+      find_user_tasks(@task)
     end
   end
 
   def show
-    @task = Task.find_by(id: params[:id])
-    render json: @task, status: :ok if @task.present?
+    find_task(params[:id])
+    render json: TaskSerializer.new(@task).serializable_hash, status: :ok if @task.present?
   end
 
   def destroy
-    @task = Task.find_by(id: params[:id])
-    render json: { task: @task, message: 'Task deleted' }, status: :ok if @task.delete
+    find_task(params[:id])
+    render json: TaskSerializer.new(@task).serializable_hash.merge(message: 'Task deleted'), status: :ok if @task.delete
   end
 
   def assign_task
-    @task = Task.find_by_id(params[:task_id])
+    find_task(params[:task_id])
     @user = User.find_by_id(params[:user_id])
     @user_task = @user.tasks << @task
     MyMailer.with(task: @task, user: @user).welcome_email.deliver_now
-    render json: { user_task: @user_task, message: 'Task assigned to user successfuly' }, status: :ok
+    render json: TaskSerializer.new(@task).serializable_hash.merge(message: 'Task assigned to user successfuly'),
+           status: :ok
   end
 
   private
@@ -64,5 +58,15 @@ class TasksController < ApiController
 
   def task_params
     params.permit(:title, :description, :due_date, :priorities, :status, :image)
+  end
+
+  def find_user_tasks(_task)
+    @user = User.find_by(id: @task.user_id)
+    MyMailer.with(task: @task, user: @user).task_updated.deliver_now
+    render json: @task, status: :ok
+  end
+
+  def find_task(id)
+    @task = Task.find_by(id:)
   end
 end

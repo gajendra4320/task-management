@@ -16,7 +16,6 @@ class Ability
       puts "------------------------------------>#{user.user_type}"
       can %i[update index destroy show create], Comment
       can :read, Task
-      can :user, User
     end
     # Define abilities for the user here. For example:
     #

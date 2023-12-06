@@ -1,51 +1,42 @@
+# frozen_string_literal: true
+
+# comments controller
 class CommentsController < ApiController
-  # skip_before_action :authenticate_request, only: %i[create index]
-  # before_action :authenticate_request
   load_and_authorize_resource
   def create
-    if @comment = @current_user.comments.create(comment_params)
-      @task = Task.find_by_id(params[:task_id])
-      @user = User.find_by_id(@task.user_id)
-      MyMailer.with(task: @task, user: @user, comment: @comment).comments_on_task.deliver_now
-      render json: { user: @comment }, status: :created
-    else
-      render json: { error: @comment.errors.full_messages }, status: :unprocessable_entity
-    end
+    @comment = @current_user.comments.create(comment_params)
+    @task = Task.find_by_id(params[:task_id])
+    @user = User.find_by_id(@task.user_id)
+    MyMailer.with(task: @task, user: @user, comment: @comment).comments_on_task.deliver_now
+    render json: CommentSerializer.new(@comment).serializable_hash, status: :created
   end
 
   def update
-    if params[:id].present?
-      # @task= @current_user.tasks.find_by_id(params[:id])
-      @comment = Comment.find_by_id(params[:id])
-      if @comment.nil?
-        render json: { message: 'Comment not exits for params id' }
-      elsif @comment.update(comment_params)
-        render json: @comment, status: :ok
-      else
-        render json: { message: 'comment not updated' }
-      end
-    else
-      render json: { message: 'id not present in params' }, status: :ok
-    end
+    comment = @current_user.comments.find_by(id: params[:id])
+    return unless comment.update(comment_params)
+
+    render json: CommentSerializer.new(comment).serializable_hash.merge(message: 'comment updated ff'),
+           status: :ok
   end
 
   def show
     @comment = Comment.find_by(id: params[:id])
-    render json: @comment, status: :ok if @comment.present?
+    render json: CommentSerializer.new(@comment).serializable_hash, status: :ok
   end
 
   def index
-    @comments = Comment.all
-    render json: @comments, status: :ok
+    comments = Comment.all
+    comments = Kaminari.paginate_array(comments).page(params[:page]).per(5)
+    render json: comments, meta: { current_page: comments.current_page, total_page: comments.total_pages },
+           each_serializer: CommentSerializer
   end
 
   def destroy
-    @comment = @current_user.comments.find_by(id: params[:id])
-    if @comment.delete
-      render json: { comment: @comment, message: 'comment deleted' }, status: :ok
-    else
-      render json: { message: 'you are not create comment' }, status: :ok
-    end
+    comment = @current_user.comments.find_by(id: params[:id])
+    return unless comment.delete
+
+    render json: CommentSerializer.new(comment).serializable_hash.merge(message: 'comment deleted'),
+           status: :ok
   end
 
   private
