@@ -1,6 +1,8 @@
 require 'sidekiq/web'
 require 'sidekiq/cron/web'
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
   # get 'admins/index'

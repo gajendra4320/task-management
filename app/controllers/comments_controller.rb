@@ -14,7 +14,6 @@ class CommentsController < ApiController
   def update
     comment = @current_user.comments.find_by(id: params[:id])
     return unless comment.update(comment_params)
-
     render json: CommentSerializer.new(comment).serializable_hash.merge(message: 'comment updated ff'),
            status: :ok
   end

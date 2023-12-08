@@ -12,12 +12,8 @@ class TasksController < ApiController
   end
 
   def create
-    task = @current_user.tasks.create(task_params)
-    if task.present?
-      render json: TaskSerializer.new(task).serializable_hash, status: :created
-    else
-      render json: { message: 'task not created' }, status: :unprocessable_entity
-    end
+    task = @current_user.tasks.create!(task_params)
+    render json: TaskSerializer.new(task).serializable_hash, status: :created if task.present?
   end
 
   def update

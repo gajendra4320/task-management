@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
+# mymailer
 class MyMailer < ApplicationMailer
   def welcome_email
     @task = params[:task]
     @user = params[:user]
-
     mail(to: @user.email, from: 'task management', task: @task, subject: 'Welcome to My Awesome Site')
   end
 

@@ -6,8 +6,8 @@ class ApiController < ActionController::API
   include JsonWebToken
   before_action :authenticate_request
   def current_user
--    @current_user
-- end
+    @current_user
+  end
 
   rescue_from CanCan::AccessDenied do |exception|
     render json: { warning: exception, status: 'authorization_failed' }
@@ -15,7 +15,13 @@ class ApiController < ActionController::API
   rescue_from ActiveRecord::RecordNotFound do |exception|
     render json: { warning: exception, status: '404' }
   end
+  rescue_from ActiveRecord::RecordInvalid do |exception|
+    render json: { warning: exception, status: '200' }
+  end
   rescue_from NoMethodError do |exception|
+    render json: { warning: exception, status: '500' }
+  end
+  rescue_from ActiveRecord::AssociationTypeMismatch do |exception|
     render json: { warning: exception, status: '500' }
   end
 

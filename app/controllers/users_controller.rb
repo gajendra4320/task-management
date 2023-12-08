@@ -50,11 +50,7 @@ class UsersController < ApiController
   # end
 
   def update
-    if @current_user.update(user_params)
-      render json: UserSerializer.new(@current_user).to_hash, status: :ok
-    else
-      render json: { error: 'User not exits' }, status: :unprocessable_entity
-    end
+    render json: UserSerializer.new(@current_user).to_hash, status: :ok if @current_user.update(user_params)
   end
 
   def show
@@ -63,7 +59,6 @@ class UsersController < ApiController
 
   def destroy
     return unless @current_user.delete
-
     render json: UserSerializer.new(@current_user).serializable_hash.merge(message: 'Current user deleted'),
            status: :created
   end
