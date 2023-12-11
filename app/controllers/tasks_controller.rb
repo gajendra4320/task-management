@@ -3,6 +3,8 @@
 # task controller
 class TasksController < ApiController
   load_and_authorize_resource
+  before_action :find_user, except: [:index]
+  before_action :find_and_authorize_task, only: [:update, :show, :destroy]
 
   def index
     @tasks = Task.all
@@ -12,41 +14,57 @@ class TasksController < ApiController
   end
 
   def create
-    task = @current_user.tasks.create!(task_params)
-    render json: TaskSerializer.new(task).serializable_hash, status: :created if task.present?
+    task = @user.tasks.create!(task_params)
+    render json: TaskSerializer.new(task).serializable_hash, status: :created
   end
 
   def update
-    find_task(params[:id])
-    if @current_user.user_type == 'Manager'
-      @task.update(update_params)
+    update_task_params = @user.user_type == 'Manager' ? update_params : task_params
+    if @task.update(update_task_params)
       find_user_tasks(@task)
-    elsif @current_user.user_type == 'Admin'
-      @task.update(task_params)
-      find_user_tasks(@task)
+    else
+      render json: { error: 'Task not updated' }, status: :unprocessable_entity
     end
   end
 
   def show
-    find_task(params[:id])
-    render json: TaskSerializer.new(@task).serializable_hash, status: :ok if @task.present?
+    render json: {message: "You are task is not present"} unless @task.present?
+    render json: TaskSerializer.new(@task).serializable_hash, status: :ok
   end
 
   def destroy
-    find_task(params[:id])
-    render json: TaskSerializer.new(@task).serializable_hash.merge(message: 'Task deleted'), status: :ok if @task.delete
+    if @task.destroy
+      render json: { message: 'Task deleted successfully' }, status: :ok
+    else
+      render json: { error: 'Task not deleted' }, status: :unprocessable_entity
+    end
   end
 
   def assign_task
-    find_task(params[:task_id])
+    @task = Task.find_by(params[:task_id])
     @user = User.find_by_id(params[:user_id])
     @user_task = @user.tasks << @task
-    MyMailer.with(task: @task, user: @user).welcome_email.deliver_now
-    render json: TaskSerializer.new(@task).serializable_hash.merge(message: 'Task assigned to user successfuly'),
-           status: :ok
+    find_user_tasks(@user_task)
   end
 
   private
+
+  def find_user
+    @user = User.find_by(id: params[:user_id])
+    render json: { error: 'User not found for this id' }, status: :not_found unless @user
+  end
+
+  def find_and_authorize_task
+    @task = @user.tasks.find_by(id: params[:id])
+    render json: { error: 'Task not exits for this user id ' }, status: :not_found unless @task
+    authorize_user
+  end
+
+  def authorize_user
+    unless @current_user.present? && @user == @current_user
+      render json: { error: 'please enter login user id' }, status: :unauthorized
+    end
+  end
 
   def update_params
     params.permit(:title, :description, :due_date, :priorities, :image)
@@ -56,13 +74,9 @@ class TasksController < ApiController
     params.permit(:title, :description, :due_date, :priorities, :status, :image)
   end
 
-  def find_user_tasks(_task)
+  def find_user_tasks(task)
     @user = User.find_by(id: @task.user_id)
     MyMailer.with(task: @task, user: @user).task_updated.deliver_now
-    render json: @task, status: :ok
-  end
-
-  def find_task(id)
-    @task = Task.find_by(id:)
-  end
+    render json: TaskSerializer.new(@task).serializable_hash.merge(message: 'Task assigned to user successfuly'),
+    status: :ok  end
 end

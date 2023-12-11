@@ -2,7 +2,8 @@
 
 # users controller
 class UsersController < ApiController
-  skip_before_action :authenticate_request, only: %i[create index google_oauth2_callback]
+  skip_before_action :authenticate_request, only: %i[create google_oauth2_callback]
+  before_action :find_and_authorize_user, only: [:destroy, :show]
   def index
     @users = User.all
     @users = Kaminari.paginate_array(@users).page(params[:page]).per(5)
@@ -49,21 +50,32 @@ class UsersController < ApiController
   #   # user.password = Devise.friendly_token[0,20]
   # end
 
-  def update
-    render json: UserSerializer.new(@current_user).to_hash, status: :ok if @current_user.update(user_params)
+  def destroy
+    if @user.destroy!
+      render json: { message: 'User deleted successfully' }, status: :ok
+    else
+      render json: { error: 'User not deleted'}
+    end
   end
 
   def show
-    render json: UserSerializer.new(@current_user).serializable_hash, status: :ok if @current_user.present?
-  end
-
-  def destroy
-    return unless @current_user.delete
-    render json: UserSerializer.new(@current_user).serializable_hash.merge(message: 'Current user deleted'),
-           status: :created
+    render json: UserSerializer.new(@user).serializable_hash, status: :ok
   end
 
   private
+
+  def find_and_authorize_user
+    @user = User.find_by(id: params[:id])
+
+    unless @user
+      render json: { error: 'User not found for this id' }, status: :not_found
+      return
+    end
+
+    unless @current_user.present? && @user == @current_user
+      render json: { error: 'please enter your id' }, status: :unauthorized
+    end
+  end
 
   def user_params
     params.permit(:name, :email, :password_digest, :user_type)
