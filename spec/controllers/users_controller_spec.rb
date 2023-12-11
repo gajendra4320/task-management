@@ -15,6 +15,7 @@ RSpec.describe UsersController, type: :controller do
   describe 'GET /index' do
     context 'show all user' do
       it 'returns users' do
+        authenticate_user
         get :index
         expect(response.status).to eq(200)
       end
@@ -67,7 +68,7 @@ RSpec.describe UsersController, type: :controller do
       it 'return current user delete' do
         authenticate_user
         delete :destroy, params: { id: user.id }
-        expect(response.status).to eq(201)
+        expect(response.status).to eq(200)
       end
     end
     context 'when current user not present' do
