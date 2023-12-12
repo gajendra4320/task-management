@@ -55,7 +55,7 @@ class TasksController < ApiController
   end
 
   def find_and_authorize_task
-    if @user.user_type == "Admin"
+    if @user.user_type == "Admin" && @user.user_type == "User"
       @task = @user.tasks.find_by(id: params[:id])
       render json: { error: 'Task not exits for this user id ' }, status: :not_found unless @task
       authorize_user
