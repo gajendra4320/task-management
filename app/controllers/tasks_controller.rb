@@ -5,7 +5,6 @@ class TasksController < ApiController
   load_and_authorize_resource
   before_action :find_user, except: [:index]
   before_action :find_and_authorize_task, only: %i[update show destroy]
-
   def index
     @tasks = Task.all
     @tasks = Kaminari.paginate_array(@tasks).page(params[:page]).per(5)
@@ -28,7 +27,7 @@ class TasksController < ApiController
   end
 
   def show
-    render json: { message: 'Your task is not present' } unless @task.present?
+    render json: { message: 'You are task is not present' } unless @task.present?
     render json: TaskSerializer.new(@task).serializable_hash, status: :ok
   end
 
@@ -55,7 +54,7 @@ class TasksController < ApiController
   end
 
   def find_and_authorize_task
-    if @user.user_type == "Admin" && @user.user_type == "User"
+    if @user.user_type == 'Admin' && @user.user_type == 'User'
       @task = @user.tasks.find_by(id: params[:id])
       render json: { error: 'Task not exits for this user id ' }, status: :not_found unless @task
       authorize_user
